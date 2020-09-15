@@ -1,0 +1,12 @@
+#!/bin/bash
+for file in ./*
+do
+    if test -d $file
+    then
+        echo $file 
+        cd $file
+        echo 'make clean in '$file
+        make clean
+        cd ..
+    fi
+done

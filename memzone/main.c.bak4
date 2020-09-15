@@ -1,0 +1,80 @@
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright(c) 2010-2014 Intel Corporation
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+#include <errno.h>
+#include <sys/queue.h>
+
+#include <rte_memory.h>
+#include <rte_launch.h>
+#include <rte_eal.h>
+#include <rte_per_lcore.h>
+#include <rte_lcore.h>
+#include <rte_debug.h>
+#include <rte_memzone.h>
+#include <rte_malloc.h>
+#include <unistd.h>
+#include "eal_private.h"
+static int
+lcore_hello(__attribute__((unused)) void *arg)
+{
+	unsigned lcore_id,  socket_id;
+	lcore_id = rte_lcore_id();
+        socket_id = rte_socket_id();
+	printf("hello from core %u\n", lcore_id);
+	printf("socket id  %u\n", socket_id);
+        sleep(60); 
+	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	int ret;
+	unsigned lcore_id;
+        const struct rte_memzone *mz;
+        int *arr;
+	ret = rte_eal_init(argc, argv);
+	if (ret < 0)
+		rte_panic("Cannot init EAL\n");
+        
+        if (rte_eal_process_type() == RTE_PROC_PRIMARY){
+             mz = rte_memzone_reserve("memzone", sizeof(int)*2,
+                                SOCKET_ID_ANY, 0);
+        }
+        else {
+             mz = rte_memzone_lookup("memzone"); 
+        }
+        if (mz == NULL)
+		rte_exit(EXIT_FAILURE, "Cannot reserve memory zone for port information\n");
+
+        printf("mz addr: %llx, mz->addr :%llx , mz->addr_64 : %llx\n", (long long)mz, (long long)(mz->addr), (long long)mz->addr_64);
+        printf("arr addr: %llx \n", (unsigned long long)(&arr));
+        arr = (int *)rte_malloc("arr", sizeof(int) * 1024, 0);
+        if (arr == NULL)
+		rte_exit(EXIT_FAILURE, "Cannot malloc memory \n");
+        printf("arr addr: %llx \n", (unsigned long long)arr);
+	/* call lcore_hello() on every slave lcore */
+	RTE_LCORE_FOREACH_SLAVE(lcore_id) {
+		rte_eal_remote_launch(lcore_hello, NULL, lcore_id);
+	}
+        if (rte_eal_process_type() == RTE_PROC_PRIMARY){
+
+            ((int *)(mz->addr))[0] =9999;
+        }
+        else {
+             printf("(mz->addr)[0] : %d \n", ((int*)(mz->addr))[0]);
+        }
+        arr[0]=4;
+	/* call it on master lcore too */
+	lcore_hello(NULL);
+        struct rte_config *tmp_config;
+        tmp_config=rte_eal_get_configuration();
+        printf("rte_config addr : %llx \n", (unsigned long long )tmp_config);
+	rte_eal_mp_wait_lcore();
+        rte_free(arr);
+	return 0;
+}

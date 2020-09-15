@@ -1,0 +1,1 @@
+build/app/distributor_app 3  -c 0xff  -- -p 0x01
