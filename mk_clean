@@ -1,4 +1,5 @@
 #!/bin/bash
+export RTE_SDK=/data1/dpdk-19.11
 for file in ./*
 do
     if test -d $file
@@ -6,7 +7,13 @@ do
         echo $file 
         cd $file
         echo 'make clean in '$file
-        make clean
+        #make clean
+        if [  -d "build" ]; then
+        rm -rf build
+        fi
+        if [  -d ".git" ]; then
+        rm -rf .git
+        fi
         cd ..
     fi
 done
