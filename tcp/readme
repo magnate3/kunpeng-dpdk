@@ -1,0 +1,2 @@
+gcc -g tcpclient.c -o tcpclient
+./tcpclient 10.10.103.229 80
