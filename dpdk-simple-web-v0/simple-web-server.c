@@ -693,9 +693,8 @@ static inline int process_tcp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, s
 				mbuf->ol_flags = PKT_TX_IPV4 | PKT_TX_IP_CKSUM | PKT_TX_TCP_CKSUM;
 				mbuf->l2_len = RTE_ETHER_HDR_LEN;
 				mbuf->l3_len = ipv4_hdrlen;
-				mbuf->l4_len = ntcp_payload_len;
-				//mbuf->l4_len = ntcp_payload_len + (tcph->data_off >> 4) * 4;
-				tcph->cksum = rte_ipv4_phdr_cksum((const struct rte_ipv4_hdr *)iph, 0);
+				mbuf->l4_len = (tcph->data_off >> 4) * 4;
+				tcph->cksum = rte_ipv4_phdr_cksum((const struct rte_ipv4_hdr *)iph, mbuf->ol_flags);
 			} else {
 				tcph->cksum = rte_ipv4_udptcp_cksum(iph, tcph);
 				iph->hdr_checksum = rte_ipv4_cksum(iph);
@@ -766,7 +765,7 @@ static inline int process_tcp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, s
 					frag->ol_flags = PKT_TX_IPV4 | PKT_TX_IP_CKSUM;
 					frag->l2_len = RTE_ETHER_HDR_LEN;
 					frag->l3_len = sizeof(struct rte_ipv4_hdr);
-					frag->l4_len = len;
+					frag->l4_len = sizeof(struct rte_tcp_hdr);
 				} else
 					niph->hdr_checksum = rte_ipv4_cksum(niph);
 

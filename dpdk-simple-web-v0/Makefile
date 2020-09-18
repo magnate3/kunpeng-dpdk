@@ -48,7 +48,7 @@ CFLAGS += $(WERROR_FLAGS)
 #CFLAGS += -D DEBUGARP
 #CFLAGS += -D DEBUGTCP
 #CFLAGS += -D RTE_LIBRTE_PDUMP
-#CFLAGS += -D USINGHWCKSUM
+CFLAGS += -D USINGHWCKSUM
 # workaround for a gcc bug with noreturn attribute
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12603
 ifeq ($(CONFIG_RTE_TOOLCHAIN_GCC),y)
