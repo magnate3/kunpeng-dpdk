@@ -1,0 +1,4 @@
+export RTE_SDK=/data1/dpdk-19.11
+export RTE_TARGET=arm64-armv8a-linuxapp-gcc
+#export CFLAGS+="-O0 -g"
+export EXTRA_CFLAGS="-O0 -g"

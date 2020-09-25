@@ -41,6 +41,20 @@ char test_data[] =
     "2823456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789<br>"
     "2923456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
 
+static inline int process_simple_tcp(int ip_version __attribute__ ((unused)),
+			       void *iph __attribute__ ((unused)), struct rte_tcp_hdr *tcph
+			       __attribute__ ((unused)), unsigned char *http_req
+			       __attribute__ ((unused)), int req_len
+			       __attribute__ ((unused)), unsigned char *http_resp, int *resp_len,
+			       int *resp_in_req)
+{
+   const char * echo = "hello world";
+   int ret = snprintf((char *)http_resp, *resp_len,"%s", echo);
+   *resp_in_req = 0;
+   if (ret < *resp_len)
+		*resp_len = ret;
+   return 1;
+}
 static inline int process_http(int ip_version __attribute__ ((unused)),
 			       void *iph __attribute__ ((unused)), struct rte_tcp_hdr *tcph
 			       __attribute__ ((unused)), unsigned char *http_req

@@ -677,7 +677,9 @@ void reply_to_icmp_echo_rqsts(void)
 				ip_src = (ip_src & 0xFFFFFFFC) | 0x00000001;
 			ip_h->src_addr = rte_cpu_to_be_32(ip_src);
 			ip_h->dst_addr = ip_addr;
-			ip_h->hdr_checksum = ipv4_hdr_cksum(ip_h);
+			//ip_h->hdr_checksum = ipv4_hdr_cksum(ip_h);
+			ip_h->hdr_checksum = 0;
+                        pkt->ol_flags = PKT_TX_IP_CKSUM;
 		} else {
                         /*
                         if (reverse_ip_addr(ip_h->dst_addr) != server_ip_addr)
@@ -809,7 +811,7 @@ int main(int argc, char **argv)
     if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_MBUF_FAST_FREE)
         local_port_conf.txmode.offloads |=
             DEV_TX_OFFLOAD_MBUF_FAST_FREE;
-
+    local_port_conf.txmode.offloads |= DEV_TX_OFFLOAD_IPV4_CKSUM;
     ret = rte_eth_dev_configure(portid, 1, 1, &local_port_conf);
     if (ret < 0)
         rte_exit(EXIT_FAILURE, "Cannot configure device: err=%d, port=%u\n",
@@ -839,6 +841,7 @@ int main(int argc, char **argv)
     fflush(stdout);
     txq_conf = dev_info.default_txconf;
     txq_conf.offloads = local_port_conf.txmode.offloads;
+    txq_conf.offloads |= DEV_TX_OFFLOAD_IPV4_CKSUM;
     ret = rte_eth_tx_queue_setup(portid, 0, nb_txd,
                                  rte_eth_dev_socket_id(portid),
                                  &txq_conf);

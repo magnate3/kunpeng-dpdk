@@ -76,7 +76,7 @@
 //#define DEBUGICMP
 //#define DEBUGTCP
 
-#define USINGHWCKSUM
+//#define USINGHWCKSUM
 
 static const struct rte_eth_conf port_conf_default = {
 	.rxmode = {.max_rx_pkt_len = RTE_ETHER_MAX_LEN},
@@ -158,6 +158,9 @@ static inline int process_icmp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, 
 			       int ipv4_hdrlen, int len);
 static inline int process_tcp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, struct rte_ipv4_hdr *iph,
 			      int ipv4_hdrlen, int len);
+static inline int process_simple_tcp(int ip_version, void *iph, struct rte_tcp_hdr *tcph,
+			       unsigned char *http_req, int req_len, unsigned char *http_resp,
+			       int *resp_len, int *resp_in_req);
 static inline int process_http(int ip_version, void *iph, struct rte_tcp_hdr *tcph,
 			       unsigned char *http_req, int req_len, unsigned char *http_resp,
 			       int *resp_len, int *resp_in_req);
@@ -620,7 +623,8 @@ static inline int process_tcp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, s
 		unsigned char buf[MAXIPLEN + sizeof(struct rte_tcp_hdr)];	// http_response
 		int resp_in_req = 0;
 		recv_tcp_data_pkts++;
-#ifdef DEBUGTCP
+//#ifdef DEBUGTCP
+#if 1
 		printf("ACK pkt len=%d(inc ether) ip len=%d\n", rte_pktmbuf_data_len(mbuf),
 		       pkt_len);
 		printf("tcp payload len=%d\n", tcp_payload_len);
@@ -642,10 +646,17 @@ static inline int process_tcp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh, s
 			return 0;
 		}
 		tcp_payload = (unsigned char *)iph + ipv4_hdrlen + (tcph->data_off >> 4) * 4;
+#if 0
 		if (process_http
 		    (4, iph, tcph, tcp_payload, tcp_payload_len, buf + sizeof(struct rte_tcp_hdr),
 		     &ntcp_payload_len, &resp_in_req) == 0)
 			return 0;
+#else
+		if (process_simple_tcp
+		    (4, iph, tcph, tcp_payload, tcp_payload_len, buf + sizeof(struct rte_tcp_hdr),
+		     &ntcp_payload_len, &resp_in_req) == 0)
+			return 0;
+#endif
 #ifdef DEBUGTCP
 		printf("http return new payload len=%d\n", ntcp_payload_len);
 #endif
