@@ -50,12 +50,8 @@ RTE_TARGET ?= $(notdir $(abspath $(dir $(firstword $(wildcard $(RTE_SDK)/*/.conf
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
-<<<<<<< HEAD
 CFLAGS += -O3 
 CFLAGS += -D DEBUGARP
-=======
-CFLAGS += -O3
->>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 CFLAGS += $(WERROR_FLAGS)
 
 # workaround for a gcc bug with noreturn attribute

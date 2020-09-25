@@ -42,11 +42,20 @@
 #include <rte_string_fns.h>
 #include <rte_lpm.h>
 #include <rte_lpm6.h>
+<<<<<<< HEAD
+#include <rte_log.h>
+=======
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 
 #include <rte_ip_frag.h>
 
 #define MAX_PKT_BURST 32
+<<<<<<< HEAD
+#define IP_PROTO_UDP     17
+//#define RTE_PTYPE_L4_UDP                    0x00000200
+=======
 
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 
 #define RTE_LOGTYPE_IP_RSMBL RTE_LOGTYPE_USER1
 
@@ -243,7 +252,58 @@ static struct rte_lpm6 *socket_lpm6[RTE_MAX_NUMA_NODES];
 #endif /* RTE_LIBRTE_IP_FRAG_TBL_STAT */
 
 
+<<<<<<< HEAD
+static void show_udp(struct rte_mbuf *m)
+{
+    int                l2_len;
+    uint16_t           eth_type;
+    struct rte_udp_hdr    *udp_h;
+    struct rte_ipv4_hdr   *ip_h;
+    struct rte_vlan_hdr   *vlan_h;
+    struct rte_ether_hdr  *eth_h;
+    char * data;
+    struct rte_mbuf *cur = m;
+    int first = 1;
+    //printf("pkt len %u,data len  %u \n", rte_pktmbuf_pkt_len(m) , rte_pktmbuf_data_len(m));
+    while(cur)
+    {
+        /*
+           mo = rte_ipv4_frag_reassemble_packet
+           only first mbuf has ehter + ip + udp header
+        */
+	if (first)
+	{
+	    eth_h = rte_pktmbuf_mtod(cur, struct rte_ether_hdr *);
+            eth_type = rte_be_to_cpu_16(eth_h->ether_type);
+            l2_len = sizeof(*eth_h);
+	     /* frames in VPC come in with ethertype 0x8100, i.e. they are 802.1q VLAN tagged */
+            if (eth_type == RTE_ETHER_TYPE_VLAN) {
+            vlan_h = (struct rte_vlan_hdr *) ((char *) eth_h + l2_len);
+            eth_type = rte_be_to_cpu_16(vlan_h->eth_proto);
+            l2_len += sizeof(*vlan_h);
+            }
+            if (eth_type != RTE_ETHER_TYPE_IPV4) {
+                return ;
+            }
+            ip_h = (struct rte_ipv4_hdr *) ((char *) eth_h + l2_len);
+            if (ip_h->next_proto_id != IP_PROTO_UDP) {
+                return ;
+             }
+	     udp_h = (struct udp_hdr *) ((char *) ip_h + sizeof(*ip_h));
+	     data = (char *) ip_h + sizeof(*ip_h) + sizeof(struct rte_udp_hdr);
+             first = 0;
+	}
+	else
+	{
+		data = rte_pktmbuf_mtod(cur, char *);
+	}
+	printf("udp packet %s \n", data);
+	cur = cur->next;
+	}
+}
+=======
 
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 
 static inline int process_arp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh,uint16_t port)
 {
@@ -274,10 +334,13 @@ static inline int process_arp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh,ui
 			   6);
 		ah->arp_data.arp_tip = ah->arp_data.arp_sip;
 		ah->arp_data.arp_sip = my_ip;
+<<<<<<< HEAD
+=======
 #ifdef DEBUGARP
 		printf("I will reply following \n");
 		dump_arp_packet(eh);
 #endif
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 		if (likely(1 == rte_eth_tx_burst(port, qconf->tx_queue_id[port], &mbuf, 1))) {
 			return 1;
 		}
@@ -364,11 +427,19 @@ reassemble(struct rte_mbuf *m, uint16_t portid, uint32_t queue,
 	rxq = &qconf->rx_queue_list[queue];
 
 	eth_hdr = rte_pktmbuf_mtod(m, struct rte_ether_hdr *);
+<<<<<<< HEAD
+        uint16_t eth_type = rte_be_to_cpu_16(eth_hdr->ether_type);
+=======
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 
 	dst_port = portid;
 
 	/* if packet is IPv4 */
+<<<<<<< HEAD
+	if (RTE_ETHER_TYPE_IPV4 == eth_type) {
+=======
 	if (RTE_ETH_IS_IPV4_HDR(m->packet_type)) {
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 		struct rte_ipv4_hdr *ip_hdr;
 		uint32_t ip_dst;
 
@@ -385,12 +456,28 @@ reassemble(struct rte_mbuf *m, uint16_t portid, uint32_t queue,
 			m->l2_len = sizeof(*eth_hdr);
 			m->l3_len = sizeof(*ip_hdr);
 
+<<<<<<< HEAD
+                        //show_udp(m);
+			/* process this fragment. */
+			mo = rte_ipv4_frag_reassemble_packet(tbl, dr, m, tms, ip_hdr);
+			if (mo == NULL)
+                        {
+				//printf("no packet to send out \n ");
+				return;
+                        }
+                        printf("before linearize m pkt len %u,data len  %u \n", rte_pktmbuf_pkt_len(m) , rte_pktmbuf_data_len(m));
+                        printf("before linearize mo pkt len %u,data len  %u \n", rte_pktmbuf_pkt_len(mo) , rte_pktmbuf_data_len(mo));
+                        show_udp(mo);
+                        rte_pktmbuf_linearize(mo);
+                        printf("after linearize mo pkt len %u,data len  %u \n", rte_pktmbuf_pkt_len(mo) , rte_pktmbuf_data_len(mo));
+=======
 			/* process this fragment. */
 			mo = rte_ipv4_frag_reassemble_packet(tbl, dr, m, tms, ip_hdr);
 			if (mo == NULL)
 				/* no packet to send out. */
 				return;
 
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 			/* we have our packet reassembled. */
 			if (mo != m) {
 				m = mo;
@@ -398,7 +485,11 @@ reassemble(struct rte_mbuf *m, uint16_t portid, uint32_t queue,
 					struct rte_ether_hdr *);
 				ip_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
 			}
+<<<<<<< HEAD
+                        show_udp(m);
+=======
 
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 			/* update offloading flags */
 			m->ol_flags |= (PKT_TX_IPV4 | PKT_TX_IP_CKSUM);
 		}
@@ -1090,6 +1181,11 @@ main(int argc, char **argv)
 
 	my_eth_addr = addr;
         my_ip = rte_cpu_to_be_32(RTE_IPV4(10,10,103,229));
+<<<<<<< HEAD
+        rte_log_set_global_level(RTE_LOG_DEBUG);
+        //rte_set_log_level(RTE_LOG_DEBUG); 
+=======
+>>>>>>> 51b0f43435798da2f6152a9ac12a7a7aef4ecc49
 	/* initialize all ports */
 	RTE_ETH_FOREACH_DEV(portid) {
 		struct rte_eth_rxconf rxq_conf;
