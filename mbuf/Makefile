@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2010-2014 Intel Corporation
-#
 
 # binary name
-APP = ip_fragmentation
+APP = mbuf
 
 # all source are stored in SRCS-y
 SRCS-y := main.c
@@ -50,16 +49,11 @@ RTE_TARGET ?= $(notdir $(abspath $(dir $(firstword $(wildcard $(RTE_SDK)/*/.conf
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
-CFLAGS += -O3
-CFLAGS += -D TEST_PAD
-#CFLAGS += -D TEST_ERROR_FRAG
+#CFLAGS += -O3  -D_EAL_PRIVATE_H_  -I $(RTE_SDK)/librte_eal/common/eal_private.h
+CFLAGS += -O3 -g 
+#EXTRA_CFLAGS ="-O0 -g"
+#CFLAGS += -O3 -g  -I$(RTE_SDK)/lib/librte_eal/common/
 CFLAGS += $(WERROR_FLAGS)
-#export EXTRA_CFLAGS="-O0 -g"
-# workaround for a gcc bug with noreturn attribute
-# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12603
-ifeq ($(CONFIG_RTE_TOOLCHAIN_GCC),y)
-CFLAGS_main.o += -Wno-return-type
-endif
 
 include $(RTE_SDK)/mk/rte.extapp.mk
 

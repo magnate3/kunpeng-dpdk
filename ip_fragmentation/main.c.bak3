@@ -404,31 +404,6 @@ send_burst(struct lcore_queue_conf *qconf, uint16_t n, uint16_t port)
 
 	return 0;
 }
-uint16_t multiple_of_32(uint16_t num)
-{
-   uint16_t div =  num/32;
-   return div ?  (div + 1)*32 : num;
-}
-static void mbuf_dump(struct rte_mbuf* m)
-{
-    printf("RTE_PKTMBUF_HEADROOM: %u\n", RTE_PKTMBUF_HEADROOM);
-    printf("sizeof(mbuf): %lu\n", sizeof(struct rte_mbuf));
-    printf("m: %p\n", m);
-    printf("m->refcnt: %u\n", m->refcnt);
-    printf("m->buf_addr: %p\n", m->buf_addr);
-    printf("m->data_off: %u\n", m->data_off);
-    printf("m->buf_len: %u\n", m->buf_len);
-    printf("m->pkt_len: %u\n", m->pkt_len);
-    printf("m->data_len: %u\n", m->data_len);
-    printf("m->nb_segs: %u\n", m->nb_segs);
-    printf("m->next: %p\n", m->next);
-    printf("m->buf_addr+m->data_off: %p\n", (char*)m->buf_addr+m->data_off);
-    printf("rte_pktmbuf_mtod(m): %p\n", rte_pktmbuf_mtod(m, char*));
-    printf("rte_pktmbuf_data_len(m): %u\n", rte_pktmbuf_data_len(m));
-    printf("rte_pktmbuf_pkt_len(m): %u\n", rte_pktmbuf_pkt_len(m));
-    printf("rte_pktmbuf_headroom(m): %u\n", rte_pktmbuf_headroom(m));
-    printf("rte_pktmbuf_tailroom(m): %u\n", rte_pktmbuf_tailroom(m));
-}
 
 static inline void
 frag_simple_forward(struct rte_mbuf *m, struct lcore_queue_conf *qconf,
@@ -462,28 +437,16 @@ frag_simple_forward(struct rte_mbuf *m, struct lcore_queue_conf *qconf,
         return ;
     }
 	
-	uint16_t udp_total_len =rte_be_to_cpu_16(ip_h->total_length) - sizeof(struct rte_udp_hdr) -((ip_h->version_ihl & 0x0F)<<2) ;
-	struct rte_udp_hdr    *udp_origin_h = (struct rte_udp_hdr*)((char *) ip_h + ((ip_h->version_ihl & 0x0F)<<2));
-        mbuf_dump(m);
 	/* Remove the Ethernet header and trailer from the input packet */
-        printf("======= udp_total_len %u \n", udp_total_len);
-#ifndef    TEST_ERROR_FRAG
-	udp_origin_h->src_port = htons(TEST_UDP_SRC_PORT);
-	udp_origin_h->dst_port = htons(TEST_UDP_DST_PORT);
-        udp_origin_h->dgram_cksum = 0;
-        udp_origin_h->dgram_cksum = rte_ipv4_udptcp_cksum(ip_h, (const void *)udp_origin_h);
-#endif
-	if (udp_origin_h->dgram_cksum == 0)
-			udp_origin_h->dgram_cksum = 0xFFFF;
 	rte_pktmbuf_adj(m, (uint16_t)sizeof(struct rte_ether_hdr));
     orig_ip_payload = rte_pktmbuf_mtod_offset(m, unsigned char *,
                                               sizeof(struct rte_ipv4_hdr));
 
-        /* Build transmission burst */
-        len = qconf->tx_mbufs[port_out].len;
+
 	/* if this is an IPv4 packet */
         if (RTE_ETHER_TYPE_IPV4 == ether_type) {
 		/* Build transmission burst for new port */
+		len = qconf->tx_mbufs[port_out].len;
 		/* if we don't need to do any fragmentation */
 		if (likely (IPV4_MTU_DEFAULT >= m->pkt_len)) {
 			rte_pktmbuf_free(m); 
@@ -518,12 +481,12 @@ frag_simple_forward(struct rte_mbuf *m, struct lcore_queue_conf *qconf,
         struct rte_ipv4_hdr   *ip_h_seg;
 	struct rte_udp_hdr    *udp_h;
        
-	struct rte_mbuf * m_seg = qconf->tx_mbufs[port_out].m_table[i];
-        mbuf_dump(m_seg);
+		struct rte_mbuf * m_seg = qconf->tx_mbufs[port_out].m_table[i];
                 //eth_hdr	
-	struct rte_ether_hdr *eth_hdr_seg = (struct rte_ether_hdr *)
+		struct rte_ether_hdr *eth_hdr_seg = (struct rte_ether_hdr *)
 			rte_pktmbuf_prepend(m_seg,
 				(uint16_t)sizeof(struct rte_ether_hdr));
+                //printf("show m_seg content:%s \n",(char*)((char *) eth_hdr_seg + sizeof(*eth_hdr_seg) + sizeof(*ip_h_seg) + sizeof(*udp_h)));
                 //show_udp(m_seg);
 		if (eth_hdr_seg == NULL) {
 			rte_panic("No headroom in mbuf.\n");
@@ -557,34 +520,30 @@ frag_simple_forward(struct rte_mbuf *m, struct lcore_queue_conf *qconf,
               printf("m_seg origin udp : %s \n", (char *)(orig_ip_payload + orig_data_offset ) );
               printf("m_seg udp : %s \n", (char *)(ip_payload));
          }
-#ifdef TEST_PAD
         /* if total frame size is less than minimum transmission unit, add IP
          * padding */
         if (unlikely(ip_payload_len + sizeof(struct rte_ipv4_hdr) +
                          sizeof(struct rte_ether_hdr) + RTE_ETHER_CRC_LEN <
                      RTE_ETHER_MIN_LEN)) {
           /* update ip->ihl first */
-          uint8_t origin_iph_len = (ip_h_seg->version_ihl & 0x0F)<<2;
-          printf("new_iph_len : %u \n", origin_iph_len);
+          ip_h_seg->version_ihl &= 0x0F;
+          printf("version_ihl: %u \n", ip_h_seg->version_ihl<<2);
+          uint8_t origin_iph_len = ip_h_seg->version_ihl<<2;
           ip_h_seg->version_ihl |=
               (RTE_IPV4_HDR_IHL_MASK & (PADDED_IPV4_HDR_SIZE >> 2));
-          uint8_t new_iph_len = (ip_h_seg->version_ihl & 0x0F) <<2;
-          printf("new_iph_len : %u \n", new_iph_len);
+          printf("version_ihl: %u \n", ip_h_seg->version_ihl<<2);
           /* update ip->tot_len */
-         uint8_t pad_len = new_iph_len -origin_iph_len;
-          ip_h_seg->total_length = ntohs(ip_payload_len + new_iph_len);
+          ip_h_seg->total_length = ntohs(ip_payload_len + PADDED_IPV4_HDR_SIZE);
           /* update l3_len */
-          printf("sizeof(struct rte_ipv4_hdr) %u \n", sizeof(struct rte_ipv4_hdr));
-          m_seg->l3_len = sizeof(struct rte_ipv4_hdr) + pad_len;
+          m_seg->l3_len = PADDED_IPV4_HDR_SIZE;
           /* update data_len & pkt_len */
-          m_seg->data_len = m_seg->pkt_len = m_seg->pkt_len + pad_len;
+          m_seg->data_len = m_seg->pkt_len = m_seg->pkt_len + IP_PADDING_LEN;
           /* ip_payload is currently the place you would add 0s */
-          memset(ip_payload, 0, pad_len);
+          memset(ip_payload, 0, IP_PADDING_LEN);
 
           /* re-set ip_payload to the right `offset` (location) now */
-          ip_payload += pad_len;
+          ip_payload += IP_PADDING_LEN;
         }
-#endif
         rte_memcpy(ip_payload, orig_ip_payload + orig_data_offset,
                    ip_payload_len);
         orig_data_offset += ip_payload_len;
@@ -593,27 +552,19 @@ frag_simple_forward(struct rte_mbuf *m, struct lcore_queue_conf *qconf,
         rte_memcpy(eth_hdr_seg, &ethh_copy, sizeof(struct rte_ether_hdr));
         rte_memcpy((unsigned char *)&eth_hdr_seg->d_addr, (unsigned char *)&eth_d_addr, 6);
 	rte_memcpy((unsigned char *)&eth_hdr_seg->s_addr, (unsigned char *)&my_eth_addr, 6);
-#ifdef TEST_ERROR_FRAG
+	//eth_hdr_seg->ether_type = ether_type;
         if (i == len)
         {
                        
 		udp_h = (struct rte_udp_hdr *) ((char *) ip_h_seg + sizeof(*ip_h_seg));
-                printf("======= udp_total_len %u equal to udp_h->dgram_len %u ? \n", udp_total_len, rte_be_to_cpu_16(udp_h->dgram_len));
-               
-                udp_origin_h->dgram_len = htons(udp_total_len);
-		udp_origin_h->src_port = htons(TEST_UDP_SRC_PORT);
-		udp_origin_h->dst_port = htons(TEST_UDP_DST_PORT);
-                udp_origin_h->dgram_cksum = 0;
-		udp_origin_h->dgram_cksum = rte_ipv4_udptcp_cksum(ip_h, (const void *)udp_origin_h);
-		if (udp_origin_h->dgram_cksum == 0)
-			udp_origin_h->dgram_cksum = 0xFFFF;
-                udp_h->dgram_len = htons(udp_total_len);
+                udp_h->dgram_len = htons(ip_payload_len);
 		udp_h->src_port = htons(TEST_UDP_SRC_PORT);
 		udp_h->dst_port = htons(TEST_UDP_DST_PORT);
                 udp_h->dgram_cksum = 0;
-		udp_h->dgram_cksum = udp_origin_h->dgram_cksum;
+		udp_h->dgram_cksum = rte_ipv4_udptcp_cksum(ip_h_seg, (const void *)udp_h);
+		if (udp_h->dgram_cksum == 0)
+			udp_h->dgram_cksum = 0xFFFF;
         }
-#endif 
         //ip checksum not need ip playload
         ip_h_seg->hdr_checksum = 0;
         ip_h_seg->hdr_checksum = rte_ipv4_cksum((struct rte_ipv4_hdr *)ip_h_seg);
