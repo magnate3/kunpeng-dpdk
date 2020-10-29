@@ -108,6 +108,16 @@
 
 #define MAX_LCORE_PARAMS 1024
 
+
+
+#define KP_ETH_RSS_IP ( \
+        ETH_RSS_IPV4 | \
+        ETH_RSS_FRAG_IPV4 | \
+        ETH_RSS_IPV6 | \
+        ETH_RSS_FRAG_IPV6 | \
+        ETH_RSS_IPV6_EX)
+
+
 /* Static global variables used within this file. */
 static uint16_t nb_rxd = RTE_TEST_RX_DESC_DEFAULT;
 static uint16_t nb_txd = RTE_TEST_TX_DESC_DEFAULT;
@@ -186,6 +196,12 @@ union flow_key {
     };
     xmm_t xmm;
 };
+// host82, eth3 48:57:02:64:e7:ae
+static struct rte_ether_addr server1_ether_addr =
+    {{0x48, 0x57, 0x02, 0x64, 0xe7, 0xae}};
+//host81  eth3 48:57:02:64:ea:1e
+static struct rte_ether_addr server2_ether_addr =
+    {{0x48, 0x57, 0x02, 0x64, 0xea, 0x1e}};
 
 #define ALL_32_BITS 0xffffffff
 #define BIT_8_TO_15 0x0000ff00
@@ -227,6 +243,12 @@ mask_key(void *key, xmm_t mask)
 #else
 #error No vector engine (SSE, NEON, ALTIVEC) available, check your toolchain
 #endif
+
+
+uint32_t port0_ip;                 // port0 IP Address in network order
+uint32_t port1_ip;                 // port1 IP Address in network order
+struct rte_ether_addr port0_eth_addr;
+struct rte_ether_addr port1_eth_addr;
 
 static void
 print_flow_key(const union flow_key* key)
@@ -278,7 +300,7 @@ static struct rte_eth_conf port_conf = {
     .rx_adv_conf = {
         .rss_conf = {
             .rss_key = intel_rss_key,
-            .rss_hf = ETH_RSS_IP  | ETH_RSS_UDP | ETH_RSS_TCP,
+            .rss_hf = KP_ETH_RSS_IP  | ETH_RSS_UDP | ETH_RSS_TCP,
         },
     },
     .txmode = {
@@ -945,6 +967,53 @@ prepare_ptype_parser(uint8_t portid, uint16_t queueid)
     return 0;
 }
 #endif
+static inline int process_arp(struct rte_mbuf *mbuf, struct rte_ether_hdr *eh,uint16_t port)
+{
+        struct rte_ether_addr my_eth_addr;      // My ethernet address
+        uint32_t my_ip;
+        uint32_t   lcore_id;
+    struct lcore_conf *qconf;
+        int len=rte_pktmbuf_data_len(mbuf);
+        lcore_id = rte_lcore_id();
+        qconf = &lcore_conf[lcore_id];
+        struct rte_arp_hdr *ah = (struct rte_arp_hdr *)((unsigned char *)eh + RTE_ETHER_HDR_LEN);
+        if (len < (int)(sizeof(struct rte_ether_hdr) + sizeof(struct rte_arp_hdr))) {
+#ifdef DEBUGICMP
+                printf("len = %d is too small for arp packet??\n", len);
+#endif
+                return 0;
+        }
+        if (rte_cpu_to_be_16(ah->arp_opcode) != RTE_ARP_OP_REQUEST) {   // ARP request
+                return 0;
+        }
+        if (0 == port)
+       {
+            my_ip = port0_ip;
+            my_eth_addr = port0_eth_addr;
+       }
+       else
+       {
+            my_ip = port1_ip;
+            my_eth_addr = port1_eth_addr;
+       }
+        if (my_ip == ah->arp_data.arp_tip) {
+#ifdef DEBUGARP
+                printf("ARP asking me....\n");
+#endif
+                rte_memcpy((unsigned char *)&eh->d_addr, (unsigned char *)&eh->s_addr, 6);
+                rte_memcpy((unsigned char *)&eh->s_addr, (unsigned char *)&my_eth_addr, 6);
+                ah->arp_opcode = rte_cpu_to_be_16(RTE_ARP_OP_REPLY);
+                ah->arp_data.arp_tha = ah->arp_data.arp_sha;
+                rte_memcpy((unsigned char *)&ah->arp_data.arp_sha, (unsigned char *)&my_eth_addr,
+                           6);
+                ah->arp_data.arp_tip = ah->arp_data.arp_sip;
+                ah->arp_data.arp_sip = my_ip;
+                if (likely(1 == rte_eth_tx_burst(port, qconf->tx_queue_id[port], &mbuf, 1))) {
+                        return 1;
+                }
+        }
+        return 0;
+}
 
 static int
 main_loop(__attribute__((unused)) void* arg)
@@ -1024,12 +1093,44 @@ main_loop(__attribute__((unused)) void* arg)
             for(j=0; j<nb_rx; j++) {
                 m = pkts_burst[j];
                 rte_prefetch0(rte_pktmbuf_mtod(m, void*));
+#ifdef MAC_FILTER
+            struct rte_ether_hdr *eth_hdr;
+            eth_hdr = rte_pktmbuf_mtod(m, struct rte_ether_hdr *);
+            /*
+            if (!rte_is_same_ether_addr(&eth_hdr->s_addr, &server1_ether_addr) && !rte_is_same_ether_addr(&eth_hdr->s_addr, &server2_ether_addr))
+            {
+                rte_pktmbuf_free(m);
+                continue;
+            }
+           */
+           if (eth_hdr->ether_type == rte_cpu_to_be_16(RTE_ETHER_TYPE_ARP)) { // ARP protocol
+                                 process_arp(m, eth_hdr,portid);
+                                 continue;
+           }
+           else if (eth_hdr->ether_type == rte_cpu_to_be_16(RTE_ETHER_TYPE_IPV4)) { // IP protocol
+                struct rte_ipv4_hdr *iph;
+                iph = (struct rte_ipv4_hdr *)((unsigned char *)(eth_hdr) + RTE_ETHER_HDR_LEN);
+                if (iph->dst_addr != port0_ip && iph->dst_addr != port1_ip)
+                {
+                    rte_pktmbuf_free(m);
+                    continue;
+                }
+                key.xmm = mask_key(rte_ctrlmbuf_data(m) + 14 + offsetof(
+                            struct rte_ipv4_hdr, time_to_live), mask_v4.x);
+                print_flow_key(&key);
+                printf("nic_hash: %x, soft_hash: %x\n", m->hash.rss, calc_rss_hash(&key));
+                send_single_packet(qconf, m, tx_portid);
+
+           }
+        }
+#else
                 key.xmm = mask_key(rte_ctrlmbuf_data(m) + 14 + offsetof(
                             struct rte_ipv4_hdr, time_to_live), mask_v4.x);
                 print_flow_key(&key);
                 printf("nic_hash: %x, soft_hash: %x\n", m->hash.rss, calc_rss_hash(&key));
                 send_single_packet(qconf, m, tx_portid);
             }
+#endif
         }
     }
 
@@ -1242,7 +1343,15 @@ main(int argc, char **argv)
         }
     }
 #endif
-
+#ifdef MAC_FILTER
+    struct rte_ether_addr addr;
+    rte_eth_macaddr_get(0, &addr);
+    port0_eth_addr = addr;
+    port0_ip = rte_cpu_to_be_32(RTE_IPV4(10,10,103,229));
+    rte_eth_macaddr_get(1, &addr);
+    port1_eth_addr = addr;
+    port1_ip = rte_cpu_to_be_32(RTE_IPV4(10,10,104,229));
+#endif
 
     check_all_ports_link_status((uint8_t)nb_ports, enabled_port_mask);
 
