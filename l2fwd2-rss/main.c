@@ -1084,7 +1084,14 @@ main_loop(__attribute__((unused)) void* arg)
             tx_portid = port_tx_table[portid];
             nb_rx = rte_eth_rx_burst(portid, queueid, pkts_burst, MAX_PKT_BURST);
             if (nb_rx == 0)
+            {
+
                 continue;
+            }
+            else if (1 == queueid%2)
+            {
+                printf(" ******* lcore= 0x%x, portid = 0x%x, RSS queue=0x%x recv packets \n",(unsigned int)lcore_id,(unsigned int) portid, (unsigned int) queueid);
+            }
 #ifdef STAT
             port_stat[portid].rx_pkt_cnt += nb_rx;
             qconf->rx_pkt_cnt[portid] += nb_rx;
@@ -1118,6 +1125,7 @@ main_loop(__attribute__((unused)) void* arg)
                 key.xmm = mask_key(rte_ctrlmbuf_data(m) + 14 + offsetof(
                             struct rte_ipv4_hdr, time_to_live), mask_v4.x);
                 print_flow_key(&key);
+                printf(" ******* lcore= 0x%x, portid = 0x%x, RSS queue=0x%x \n",(unsigned int)lcore_id,(unsigned int) portid, (unsigned int) queueid);
                 printf("nic_hash: %x, soft_hash: %x\n", m->hash.rss, calc_rss_hash(&key));
                 send_single_packet(qconf, m, tx_portid);
 
@@ -1127,6 +1135,7 @@ main_loop(__attribute__((unused)) void* arg)
                 key.xmm = mask_key(rte_ctrlmbuf_data(m) + 14 + offsetof(
                             struct rte_ipv4_hdr, time_to_live), mask_v4.x);
                 print_flow_key(&key);
+                printf(" - RSS queue=0x%x", (unsigned int) queueid);
                 printf("nic_hash: %x, soft_hash: %x\n", m->hash.rss, calc_rss_hash(&key));
                 send_single_packet(qconf, m, tx_portid);
             }
