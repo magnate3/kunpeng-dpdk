@@ -130,6 +130,15 @@ I will reply following
 
 ## hinic driver
 
+```Shell
+(gdb) bt
+#0  0x000000000057efe4 in rte_pci_register ()
+#1  0x00000000009401e4 in __libc_csu_init ()
+#2  0x0000ffffbe4a16c8 in __libc_start_main (main=0x48617c <main>, argc=10, argv=0xfffffffff3f8, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=<optimized out>) at libc-start.c:225
+#3  0x00000000004822dc in _start ()
+(gdb) c
+```
+
 ```
 /** Helper for PCI device registration from driver (eth, crypto) instance */
 #define RTE_PMD_REGISTER_PCI(nm, pci_drv) \
