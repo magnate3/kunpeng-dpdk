@@ -1,3 +1,20 @@
+# nic
+
+```
+[root@centos7 test]# ethtool -l enp6s0
+Channel parameters for enp6s0:
+Pre-set maximums:
+RX:             16
+TX:             16
+Other:          0
+Combined:       0
+Current hardware settings:
+RX:             8
+TX:             8
+Other:          0
+Combined:       0
+```
+
 # bind dpdk
 ```shell
 [root@centos7 dpdk-19.11]# ./usertools/dpdk-devbind.py  -u 0000:05:00.0
