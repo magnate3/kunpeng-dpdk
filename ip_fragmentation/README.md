@@ -13,7 +13,9 @@ export RTE_SDK=/data1/dpdk-19.11
 export EXTRA_CFLAGS='-g -O0'
 send_burst
 ./build/app/ip_fragmentation  -l 1 -n 4 -- -p 1 -q 1
-```shell
+```
+
+
 ```text
  注意:
 (1) 这里使用了一个 lcore, 如果使用多个lcore, 由于 某种原因 同一条流的分片可能被2个 lcore 处理, 造成重组失败
