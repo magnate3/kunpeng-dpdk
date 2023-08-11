@@ -40,3 +40,31 @@ o = rte_ipv4_frag_reassemble_packet(self->frag_tbl,
 			}
 			ipv4_hdr->hdr_checksum = rte_ipv4_cksum(ipv4_hdr);
 ```
+# sever
+```
+10.10.103.229
+port = 4444
+#define TEST_UDP_SRC_PORT 4444
+#define TEST_UDP_DST_PORT 4444
+```
+
+# client
+
+```
+#!/usr/bin/python
+
+from scapy.all import *
+sip="10.10.103.81"
+dip="10.10.103.229"
+payload="A"*496+"B"*500 + "c"*500
+packet=IP(src=sip,dst=dip,id=12345)/UDP(sport=4444,dport=4444)/payload
+
+frags=fragment(packet,fragsize=500)
+counter=1
+for fragment in frags:
+    print "Packet no#"+str(counter)
+    print "==================================================="
+    fragment.show() #displays each fragment
+    counter+=1
+    send(fragment)
+```
