@@ -140,11 +140,34 @@ RTE_INIT(pciinitfn_ ##nm) \
 } \
 RTE_PMD_EXPORT_NAME(nm, __COUNTER__)
 ```
-```
+```C
+#define RTE_PRIO(prio) \
+        RTE_PRIORITY_ ## prio
+
+/**
+ * Run function before main() with high priority.
+ *
+ * @param func
+ *   Constructor function.
+ * @param prio
+ *   Priority number must be above 100.
+ *   Lowest number is the first to run.
+ */
 #ifndef RTE_INIT_PRIO /* Allow to override from EAL */
 #define RTE_INIT_PRIO(func, prio) \
 static void __attribute__((constructor(RTE_PRIO(prio)), used)) func(void)
 #endif
+
+/**
+ * Run function before main() with low priority.
+ *
+ * The constructor will be run after prioritized constructors.
+ *
+ * @param func
+ *   Constructor function.
+ */
+#define RTE_INIT(func) \
+        RTE_INIT_PRIO(func, LAST)
 ```
 
 # client
