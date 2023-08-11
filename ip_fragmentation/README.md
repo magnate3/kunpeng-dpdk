@@ -66,7 +66,7 @@ port = 4444
 ```
 
 ```Shell
- ./build/app/ip_fragmentation  -l 1 -n 4 -- -p 1 -q 1
+[root@centos7 ip_frag]# ./build/app/ip_fragmentation  -l 1 -n 4 -- -p 0x1 -q 1
 EAL: Detected 128 lcore(s)
 EAL: Detected 4 NUMA nodes
 EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
@@ -143,6 +143,124 @@ IP_FRAG: entering main loop on lcore 1
 IP_FRAG:  -- lcoreid=1 portid=0
 ARP asking me....
 I will reply following 
+packet is frag ,and no packet to send out 
+ ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 524
+more frag: 8192
+
+packet is frag ,and no packet to send out 
+ packet is frag ,and no packet to send out 
+ ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 524
+more frag: 8192
+
+packet is frag ,and no packet to send out 
+ packet is frag ,and no packet to send out 
+ ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 524
+more frag: 8192
+
+packet is frag ,and no packet to send out 
+ packet is frag ,and no packet to send out 
+ ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 512
+more frag: 0
+
+reassembled
+before linearize m pkt len 492,data len  492 
+before linearize mo pkt len 2038,data len  538 
+after linearize mo pkt len 2038,data len  2038 
+RTE_PKTMBUF_HEADROOM: 128
+sizeof(mbuf): 128
+m: 0x13ecb9980
+m->refcnt: 1
+m->buf_addr: 0x13ecb9a00
+m->data_off: 128
+m->buf_len: 2176
+m->pkt_len: 2038
+m->data_len: 2038
+m->nb_segs: 1
+m->next: (nil)
+m->buf_addr+m->data_off: 0x13ecb9a80
+rte_pktmbuf_mtod(m): 0x13ecb9a80
+rte_pktmbuf_data_len(m): 2038
+rte_pktmbuf_pkt_len(m): 2038
+rte_pktmbuf_headroom(m): 128
+rte_pktmbuf_tailroom(m): 10
+======= udp_total_len 1996 
+RTE_PKTMBUF_HEADROOM: 128
+sizeof(mbuf): 128
+m: 0x13ed96780
+m->refcnt: 1
+m->buf_addr: 0x13ed96800
+m->data_off: 128
+m->buf_len: 2176
+m->pkt_len: 1500
+m->data_len: 20
+m->nb_segs: 2
+m->next: 0x13e1c4b00
+m->buf_addr+m->data_off: 0x13ed96880
+rte_pktmbuf_mtod(m): 0x13ed96880
+rte_pktmbuf_data_len(m): 20
+rte_pktmbuf_pkt_len(m): 1500
+rte_pktmbuf_headroom(m): 128
+rte_pktmbuf_tailroom(m): 2028
+ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 1500
+more frag: 8192
+
+m_seg->pkt_len: 1514, ip_payload_len: 1480, next_proto_id :17 
+m_seg origin udp : AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd 
+m_seg udp : gQ
+
+gddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd 
+RTE_PKTMBUF_HEADROOM: 128
+sizeof(mbuf): 128
+m: 0x13ed44880
+m->refcnt: 1
+m->buf_addr: 0x13ed44900
+m->data_off: 128
+m->buf_len: 2176
+m->pkt_len: 544
+m->data_len: 20
+m->nb_segs: 2
+m->next: 0x13e1c4980
+m->buf_addr+m->data_off: 0x13ed44980
+rte_pktmbuf_mtod(m): 0x13ed44980
+rte_pktmbuf_data_len(m): 20
+rte_pktmbuf_pkt_len(m): 544
+rte_pktmbuf_headroom(m): 128
+rte_pktmbuf_tailroom(m): 2028
+ip_dst: 10.10.103.229
+ip_src: 10.10.103.81
+total_length: 544
+more frag: 0
+
+m_seg->pkt_len: 558, ip_payload_len: 524, next_proto_id :17 
+m_seg origin udp : ccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd 
+m_seg udp :  ~@D
+gQ
+
+gcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccdddddddd 
+Transmit packets： 2 
+ dst Address:48:57:02:64:EA:1E
+ src Address:44:A1:91:A4:9C:0B
+ip_dst: 10.10.103.81
+ip_src: 10.10.103.229
+total_length: 1500
+more frag: 8192
+
+ dst Address:48:57:02:64:EA:1E
+ src Address:44:A1:91:A4:9C:0B
+ip_dst: 10.10.103.81
+ip_src: 10.10.103.229
+total_length: 544
+more frag: 0
 ```
 
 ## hinic driver
@@ -215,4 +333,92 @@ for fragment in frags:
     fragment.show() #displays each fragment
     counter+=1
     send(fragment)
+```
+
+```Shell
+[root@bogon scapy]# python frag2.py 
+Packet no#1
+===================================================
+###[ IP ]### 
+  version   = 4
+  ihl       = None
+  tos       = 0x0
+  len       = None
+  id        = 12345
+  flags     = MF
+  frag      = 0
+  ttl       = 64
+  proto     = udp
+  chksum    = None
+  src       = 10.10.103.81
+  dst       = 10.10.103.229
+  \options   \
+###[ Raw ]### 
+     load      = '\x05\xdc\x11\\\x07\xd4\xf0\xbeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+
+.
+Sent 1 packets.
+Packet no#2
+===================================================
+###[ IP ]### 
+  version   = 4
+  ihl       = None
+  tos       = 0x0
+  len       = None
+  id        = 12345
+  flags     = MF
+  frag      = 63
+  ttl       = 64
+  proto     = udp
+  chksum    = None
+  src       = 10.10.103.81
+  dst       = 10.10.103.229
+  \options   \
+###[ Raw ]### 
+     load      = 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBcccc'
+
+.
+Sent 1 packets.
+Packet no#3
+===================================================
+###[ IP ]### 
+  version   = 4
+  ihl       = None
+  tos       = 0x0
+  len       = None
+  id        = 12345
+  flags     = MF
+  frag      = 126
+  ttl       = 64
+  proto     = udp
+  chksum    = None
+  src       = 10.10.103.81
+  dst       = 10.10.103.229
+  \options   \
+###[ Raw ]### 
+     load      = 'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccdddddddd'
+
+.
+Sent 1 packets.
+Packet no#4
+===================================================
+###[ IP ]### 
+  version   = 4
+  ihl       = None
+  tos       = 0x0
+  len       = None
+  id        = 12345
+  flags     = 
+  frag      = 189
+  ttl       = 64
+  proto     = udp
+  chksum    = None
+  src       = 10.10.103.81
+  dst       = 10.10.103.229
+  \options   \
+###[ Raw ]### 
+     load      = 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+
+.
+Sent 1 packets.
 ```
