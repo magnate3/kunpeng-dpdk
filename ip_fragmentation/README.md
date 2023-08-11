@@ -128,6 +128,25 @@ ARP asking me....
 I will reply following 
 ```
 
+## hinic driver
+
+```
+/** Helper for PCI device registration from driver (eth, crypto) instance */
+#define RTE_PMD_REGISTER_PCI(nm, pci_drv) \
+RTE_INIT(pciinitfn_ ##nm) \
+{\
+        (pci_drv).driver.name = RTE_STR(nm);\
+        rte_pci_register(&pci_drv); \
+} \
+RTE_PMD_EXPORT_NAME(nm, __COUNTER__)
+```
+```
+#ifndef RTE_INIT_PRIO /* Allow to override from EAL */
+#define RTE_INIT_PRIO(func, prio) \
+static void __attribute__((constructor(RTE_PRIO(prio)), used)) func(void)
+#endif
+```
+
 # client
 
 ```
