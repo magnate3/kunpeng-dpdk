@@ -204,8 +204,8 @@ static void __attribute__((constructor(RTE_PRIO(prio)), used)) func(void)
 from scapy.all import *
 sip="10.10.103.81"
 dip="10.10.103.229"
-payload="A"*496+"B"*500 + "c"*500
-packet=IP(src=sip,dst=dip,id=12345)/UDP(sport=4444,dport=4444)/payload
+payload="A"*496+"B"*500 + "c"*500 + "d"*500
+packet=IP(src=sip,dst=dip,id=12345)/UDP(sport=1500,dport=4444)/payload
 
 frags=fragment(packet,fragsize=500)
 counter=1
