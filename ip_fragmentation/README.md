@@ -1,11 +1,12 @@
 # band dpdk
+```shell
 [root@centos7 dpdk-19.11]# ./usertools/dpdk-devbind.py  -u 0000:05:00.0
 Warning: routing table indicates that interface 0000:05:00.0 is active. Skipping unbind
 [root@centos7 dpdk-19.11]# ip l set enp5s0 down
 [root@centos7 dpdk-19.11]# ./usertools/dpdk-devbind.py  -u 0000:05:00.0
 [root@centos7 dpdk-19.11]# ./usertools/dpdk-devbind.py   --bind=vfio-pci  0000:05:00.0
 [root@centos7 dpdk-19.11]# 
-
+```
 
 
 export RTE_SDK=/data1/dpdk-19.11
