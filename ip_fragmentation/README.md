@@ -1,4 +1,4 @@
-# band dpdk
+# bind dpdk
 ```shell
 [root@centos7 dpdk-19.11]# ./usertools/dpdk-devbind.py  -u 0000:05:00.0
 Warning: routing table indicates that interface 0000:05:00.0 is active. Skipping unbind
